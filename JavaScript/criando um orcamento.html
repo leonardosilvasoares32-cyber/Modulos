@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Meu Orçamento</title>
+    <link rel="stylesheet" href="style.css"> <!-- Para estilizar -->
+</head>
+<body>
+    <h1>Controle de Orçamento</h1>
+
+    <!-- Formulário para adicionar transações -->
+    <form id="form-orcamento">
+        <label for="descricao">Descrição:</label>
+        <input type="text" id="descricao" required><br><br>
+
+        <label for="valor">Valor:</label>
+        <input type="number" id="valor" step="0.01" required><br><br>
+
+        <label for="tipo">Tipo:</label>
+        <select id="tipo">
+            <option value="receita">Receita</option>
+            <option value="despesa">Despesa</option>
+        </select><br><br>
+
+        <button type="submit">Adicionar</button>
+    </form>
+
+    <!-- Área para exibir as transações -->
+    <h2>Transações:</h2>
+    <div id="lista-transacoes">
+        <!-- Itens serão adicionados aqui via JavaScript -->
+    </div>
+
+    <!-- Área para o balanço (saldo) -->
+    <h2>Saldo Atual: R$ <span id="saldo">0.00</span></h2>
+
+    <script src="script.js"></script> <!-- Para a lógica -->
+</body>
+</html>

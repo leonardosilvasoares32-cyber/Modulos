@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Sistema Gerencial</title>
+    
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <style>
+        /* [Mantenha seus estilos de login aqui] */
+        body { font-family: sans-serif; margin: 0; background-color: #f0f2f5; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .login-box { padding: 40px; text-align: center; max-width: 400px; background-color: #fff; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .form-group { margin-bottom: 15px; }
+        input[type="email"], input[type="password"] { width: 100%; padding: 10px; border: 1px solid #d9d9d9; border-radius: 4px; box-sizing: border-box; }
+        .btn-primary { background-color: #1677ff; color: white; padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; width: 100%; margin-top: 15px; }
+    </style>
+</head>
+<body>
+    <div class="login-box">
+        <h2>Acesso ao Sistema</h2>
+        <form id="formLogin">
+            <div class="form-group">
+                <label for="inputEmail">Email:</label>
+                <input type="email" id="inputEmail" placeholder="seu.email@empresa.com" required>
+            </div>
+            <div class="form-group">
+                <label for="inputSenha">Senha:</label>
+                <input type="password" id="inputSenha" placeholder="********" required>
+            </div>
+            <button type="submit" class="btn-primary">Entrar</button>
+        </form>
+        <p id="mensagemLogin" style="color: red; margin-top: 10px;">Aguardando inicialização...</p>
+    </div>
+    
+    <script type="module" src="js/core.js"></script>
+    
+    <script type="module">
+        // Importa as chaves e o setter do core.js
+        import { 
+            SUPABASE_URL, 
+            SUPABASE_ANON_KEY, 
+            setSupabaseClient,
+            supabase, // Cliente (null inicialmente)
+            carregarPerfilVendedor 
+        } from './js/core.js';
+
+        // =========================================================
+        // LÓGICA DE INICIALIZAÇÃO E AUTENTICAÇÃO
+        // =========================================================
+        function inicializarSupabaseClient() {
+            const msg = document.getElementById('mensagemLogin');
+
+            if (typeof window.supabase !== 'undefined') {
+                const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                setSupabaseClient(client); // Injeta o cliente no core.js
+
+                setupAuthListener(client); 
+                msg.textContent = 'Pronto para login.';
+                msg.style.color = '#333';
+                
+            } else {
+                msg.textContent = 'Erro fatal: Biblioteca Supabase não encontrada.';
+                console.error("ERRO GRAVE: A biblioteca Supabase não foi carregada.");
+            }
+        }
+
+        function setupAuthListener(client) {
+            // Listener de Estado: Disparado no login ou na verificação de sessão
+            client.auth.onAuthStateChange((event, session) => {
+                if (session) {
+                    redirecionar(session);
+                }
+            });
+        }
+
+        async function redirecionar(session) {
+            // Tenta carregar o perfil para obter o nível de acesso
+            const perfil = await carregarPerfilVendedor(session.user.id);
+            const nivel = perfil?.nivel_acesso || 'usuario';
+
+            console.log(`Login OK. Nível de Acesso: ${nivel}`);
+            
+            if (nivel === 'admin') {
+                window.location.href = 'admin.html';
+            } else {
+                window.location.href = 'vendas.html'; // Padrão para PDV
+            }
+        }
+
+        // Listener de Login
+        document.getElementById('formLogin').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            if (!supabase) {
+                document.getElementById('mensagemLogin').textContent = 'Erro de inicialização. Recarregue a página.';
+                return;
+            }
+
+            const email = document.getElementById('inputEmail').value;
+            const password = document.getElementById('inputSenha').value;
+            const msg = document.getElementById('mensagemLogin');
+            
+            msg.textContent = 'Tentando login...';
+            msg.style.color = '#1677ff';
+            
+            const { error } = await supabase.auth.signInWithPassword({ email, password });
+
+            if (error) {
+                console.error('Erro detalhado no Supabase:', error);
+                msg.textContent = 'ERRO DE AUTENTICAÇÃO: ' + error.message;
+                msg.style.color = 'red';
+            } else {
+                // O redirecionamento é feito pelo setupAuthListener
+                msg.textContent = 'Login efetuado. Redirecionando...';
+                msg.style.color = 'green';
+            }
+        });
+
+        // Inicializa o Supabase assim que o DOM estiver carregado
+        document.addEventListener('DOMContentLoaded', inicializarSupabaseClient);
+    </script>
+</body>
+</html>
